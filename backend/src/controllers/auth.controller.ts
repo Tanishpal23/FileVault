@@ -4,23 +4,19 @@ import { userRepository } from "../repositories/user.repository";
 import { env } from "../config/env";
 import { asyncHandler } from "../utils/asyncHandler";
 
+const getCookieOptions = (maxAge?: number) => ({
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+  ...(maxAge !== undefined ? { maxAge } : {}),
+});
+
 export class AuthController {
   register = asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.register(req.body);
 
-    res.cookie("accessToken", result.accessToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("accessToken", result.accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(201).json({
       success: true,
@@ -43,19 +39,8 @@ export class AuthController {
       ? 30 * 24 * 60 * 60 * 1000 // 30 days
       : 7 * 24 * 60 * 60 * 1000; // 7 days
 
-    res.cookie("accessToken", result.accessToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: refreshMaxAge,
-    });
+    res.cookie("accessToken", result.accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions(refreshMaxAge));
 
     res.status(200).json({
       success: true,
@@ -66,22 +51,20 @@ export class AuthController {
   me = asyncHandler(async (req: Request, res: Response) => {
     const user = await userRepository.findById(req.user!.id);
     if (!user) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
-        error: { code: "USER_NOT_FOUND", message: "User not found" },
+        error: { code: "USER_NOT_FOUND", message: "User does not exist" },
       });
-      return;
     }
 
     res.status(200).json({
       success: true,
       data: {
         id: user.id,
-        email: user.email,
         name: user.name,
-        avatarUrl: user.avatarUrl,
-        storageQuota: user.storageQuota.toString(),
+        email: user.email,
         storageUsed: user.storageUsed.toString(),
+        storageQuota: user.storageQuota.toString(),
         createdAt: user.createdAt,
       },
     });
@@ -91,19 +74,8 @@ export class AuthController {
     const token = req.cookies?.refreshToken || req.body.refreshToken;
     const result = await authService.refresh(token);
 
-    res.cookie("accessToken", result.accessToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("accessToken", result.accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(200).json({
       success: true,
@@ -115,8 +87,8 @@ export class AuthController {
     const token = req.cookies?.refreshToken || req.body.refreshToken;
     await authService.logout(token);
 
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", getCookieOptions());
+    res.clearCookie("refreshToken", getCookieOptions());
 
     res.status(200).json({
       success: true,

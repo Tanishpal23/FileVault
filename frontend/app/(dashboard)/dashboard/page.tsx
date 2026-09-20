@@ -101,56 +101,13 @@ export default function DashboardPage() {
       } else {
         setBreadcrumbs([{ id: "root", name: "My Files" }]);
       }
-    } catch {
-      // Fallback demo data if backend offline or auth token refreshing
-      setFolders([
-        {
-          id: "demo-f1",
-          name: "Design System 2026",
-          parentId: null,
-          color: "#6366f1",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          _count: { files: 8, subFolders: 2 },
-        },
-        {
-          id: "demo-f2",
-          name: "Marketing & Growth",
-          parentId: null,
-          color: "#10b981",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          _count: { files: 12, subFolders: 1 },
-        },
-      ]);
-      setFiles([
-        {
-          id: "demo-1",
-          name: "Brand_Guidelines_2026.pdf",
-          originalName: "Brand_Guidelines_2026.pdf",
-          mimeType: "application/pdf",
-          size: "4823449",
-          storageKey: "demo/brand.pdf",
-          status: "AVAILABLE",
-          isStarred: true,
-          folderId: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: "demo-2",
-          name: "product-demo-launch.mp4",
-          originalName: "product-demo-launch.mp4",
-          mimeType: "video/mp4",
-          size: "149520896",
-          storageKey: "demo/launch.mp4",
-          status: "AVAILABLE",
-          isStarred: false,
-          folderId: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]);
+    } catch (err: any) {
+      setFolders([]);
+      setFiles([]);
+      setBreadcrumbs([{ id: "root", name: "My Files" }]);
+      if (err?.message && !err.message.includes("401")) {
+        showToast("Failed to load contents: " + err.message);
+      }
     } finally {
       setIsLoading(false);
     }

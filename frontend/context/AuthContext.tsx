@@ -70,27 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = async (credentials: { email: string; password: string; rememberMe?: boolean }) => {
-    try {
-      const res = await api.post<{ user: User }>("/api/auth/login", credentials);
-      setUser(res.user);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("filevault_user", JSON.stringify(res.user));
-      }
-    } catch (err: any) {
-      // Fallback for immediate UI evaluation if backend not reachable
-      if (err.message?.includes("Failed to fetch") || err.code === "PARSE_ERROR") {
-        const demoUser: User = {
-          id: "demo-user-1",
-          name: credentials.email.split("@")[0] || "Demo User",
-          email: credentials.email,
-          storageQuota: "10737418240",
-          storageUsed: "7730941132",
-        };
-        setUser(demoUser);
-        localStorage.setItem("filevault_user", JSON.stringify(demoUser));
-        return;
-      }
-      throw err;
+    const res = await api.post<{ user: User }>("/api/auth/login", credentials);
+    setUser(res.user);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("filevault_user", JSON.stringify(res.user));
     }
   };
 
@@ -109,33 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: { name: string; email: string; password: string; confirmPassword: string }) => {
-    try {
-      const res = await api.post<{ user: User }>("/api/auth/register", data);
-      setUser(res.user);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("filevault_user", JSON.stringify(res.user));
-      }
-    } catch (err: any) {
-      if (
-        err.message?.includes("Failed to fetch") ||
-        err.code === "PARSE_ERROR" ||
-        err.message?.includes("database") ||
-        err.status === 500
-      ) {
-        const demoUser: User = {
-          id: "demo-user-1",
-          name: data.name,
-          email: data.email,
-          storageQuota: "10737418240",
-          storageUsed: "0",
-        };
-        setUser(demoUser);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("filevault_user", JSON.stringify(demoUser));
-        }
-        return;
-      }
-      throw err;
+    const res = await api.post<{ user: User }>("/api/auth/register", data);
+    setUser(res.user);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("filevault_user", JSON.stringify(res.user));
     }
   };
 
