@@ -1,5 +1,6 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/$/, "");
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -22,6 +23,14 @@ export async function apiRequest<T = any>(
     headers.set("Content-Type", "application/json");
   }
 
+  // Attach Bearer token for seamless cross-domain auth (Vercel <-> Render)
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("filevault_token");
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
   // Include credentials for HTTP-only cookies
   const response = await fetch(url, {
     ...options,
@@ -40,6 +49,8 @@ export async function apiRequest<T = any>(
   if (!response.ok || !json.success) {
     if (response.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("filevault_user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("filevault_token");
       const path = window.location.pathname;
       if (
         endpoint !== "/api/auth/me" &&

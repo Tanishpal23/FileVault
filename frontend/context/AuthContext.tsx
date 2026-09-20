@@ -70,10 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = async (credentials: { email: string; password: string; rememberMe?: boolean }) => {
-    const res = await api.post<{ user: User }>("/api/auth/login", credentials);
+    const res = await api.post<{ user: User; accessToken?: string }>("/api/auth/login", credentials);
     setUser(res.user);
     if (typeof window !== "undefined") {
       localStorage.setItem("filevault_user", JSON.stringify(res.user));
+      if (res.accessToken) {
+        localStorage.setItem("accessToken", res.accessToken);
+      }
     }
   };
 
@@ -92,10 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: { name: string; email: string; password: string; confirmPassword: string }) => {
-    const res = await api.post<{ user: User }>("/api/auth/register", data);
+    const res = await api.post<{ user: User; accessToken?: string }>("/api/auth/register", data);
     setUser(res.user);
     if (typeof window !== "undefined") {
       localStorage.setItem("filevault_user", JSON.stringify(res.user));
+      if (res.accessToken) {
+        localStorage.setItem("accessToken", res.accessToken);
+      }
     }
   };
 
@@ -108,6 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       if (typeof window !== "undefined") {
         localStorage.removeItem("filevault_user");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("filevault_token");
       }
     }
   };

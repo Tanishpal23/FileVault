@@ -36,7 +36,24 @@ app.use(
 // CORS configuration
 app.use(
   cors({
-    origin: [env.FRONTEND_URL, "http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+
+      const cleanFrontendUrl = env.FRONTEND_URL?.replace(/\/$/, "");
+
+      if (
+        origin === cleanFrontendUrl ||
+        origin === "http://localhost:3000" ||
+        origin === "http://127.0.0.1:3000" ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost")
+      ) {
+        return callback(null, true);
+      }
+
+      callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
