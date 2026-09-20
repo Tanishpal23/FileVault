@@ -123,6 +123,34 @@ export class AuthController {
       data: { message: "Successfully logged out" },
     });
   });
+
+  forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.forgotPassword(req.body.email);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
+
+  verifyOtp = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.verifyOtp(req.body.email, req.body.otp);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
+
+  resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.resetPassword(
+      req.body.email,
+      req.body.otp,
+      req.body.newPassword
+    );
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }
 
 export const authController = new AuthController();

@@ -23,6 +23,11 @@ const envSchema = z.object({
   R2_BUCKET_NAME: z.string().default("filevault"),
   R2_ENDPOINT: z.string().optional().default(""),
   STORAGE_LOCAL_DIR: z.string().default("./storage_data"),
+  SMTP_HOST: z.string().optional().default(""),
+  SMTP_PORT: z.coerce.number().optional().default(587),
+  SMTP_USER: z.string().optional().default(""),
+  SMTP_PASS: z.string().optional().default(""),
+  SMTP_FROM: z.string().optional().default("FileVault <no-reply@filevault.com>"),
 });
 
 const parsed = envSchema.safeParse(process.env);

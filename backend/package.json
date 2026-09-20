@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "mime-types": "^2.1.35",
     "multer": "^2.4.0",
+    "nodemailer": "^10.0.10",
     "pino": "^9.6.0",
     "pino-http": "^10.4.0",
     "socket.io": "^4.8.3",
@@ -40,6 +41,7 @@
     "@types/jsonwebtoken": "^9.0.8",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.13.4",
+    "@types/nodemailer": "^8.0.2",
     "prisma": "^6.4.1",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"

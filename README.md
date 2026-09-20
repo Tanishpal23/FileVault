@@ -7,36 +7,43 @@
 [![Express](https://img.shields.io/badge/Express-4.21.2-000000?style=for-the-badge&logo=express)](https://expressjs.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon_Serverless-4169E1?style=for-the-badge&logo=postgresql)](https://neon.tech/)
 [![Prisma ORM](https://img.shields.io/badge/Prisma_ORM-6.4.1-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![Backblaze B2](https://img.shields.io/badge/Backblaze_B2-S3_Compatible-red?style=for-the-badge&logo=backblaze)](https://www.backblaze.com/b2/)
 [![Cloudflare R2](https://img.shields.io/badge/Cloudflare_R2-S3_Compatible-F38020?style=for-the-badge&logo=cloudflare)](https://www.cloudflare.com/products/r2/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-Realtime_Events-010101?style=for-the-badge&logo=socket.io)](https://socket.io/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-**FileVault** is an enterprise-grade, high-performance cloud storage and real-time collaboration SaaS platform inspired by Google Drive and Dropbox. Engineered with **Next.js 16 (App Router)**, **Node.js**, **Express**, **Prisma ORM**, **PostgreSQL**, **Cloudflare R2 / AWS S3**, and **Socket.IO**, FileVault delivers resilient chunked resumable uploads, inline multi-format media previewing, live side-by-side commenting, granular role-based access control, password-protected public share links, and automated snapshot version recovery.
+**FileVault** is an enterprise-grade, high-performance cloud storage and real-time collaboration SaaS platform inspired by Google Drive and Dropbox. Engineered with **Next.js 16 (App Router)**, **Node.js**, **Express**, **Prisma ORM**, **PostgreSQL**, **Backblaze B2 / Cloudflare R2 / AWS S3**, and **Socket.IO**, FileVault delivers resilient chunked resumable uploads, inline multi-format media previewing, live side-by-side commenting, granular role-based access control, password-protected public share links, interactive visual anti-bot Captcha, OTP password reset via SMTP, and automated snapshot version recovery.
 
 ---
 
 ## Key Features
 
-### 1. Chunked Resumable Uploads & Cloudflare R2 Storage
+### 1. Chunked Resumable Uploads & Multi-Cloud S3 Storage
 - **Resumable Multipart Uploads**: Handles large multi-gigabyte file transfers reliably by partitioning files into 5 MB chunks with parallel uploading and automatic exponential retries.
-- **Direct-to-Storage Presigned URLs**: Files upload directly to Cloudflare R2 / AWS S3 via short-lived signed URLs, bypassing server memory and CPU bottlenecks.
+- **Direct-to-Storage Presigned URLs**: Files upload directly to **Backblaze B2**, **Cloudflare R2**, or **AWS S3** via short-lived signed URLs, bypassing server memory and CPU bottlenecks.
+- **Auto-Region S3 Resolution**: Automatically detects and adapts cluster regions from custom S3 endpoints (e.g. Backblaze B2 regional hosts).
 - **Local Mock Storage Fallback**: Development-friendly local mock storage provider that emulates S3 presigned PUT/GET flows out of the box without requiring cloud credentials.
 - **Checksum Verification**: Validates SHA-256 file hashes on completion to prevent bit-rot and ensure complete data integrity.
 
-### 2. Universal Multi-Format Inline Previewer
+### 2. Enterprise Authentication & Security Safeguards
+- **Interactive Alphanumeric Visual Captcha**: Canvas-rendered 6-character anti-bot challenge on `/login` featuring randomized font sizing, character tilt, distortion bezier curves, and noise dots (curated charset excluding ambiguous characters `0/O/1/l/I`).
+- **OTP Password Reset via SMTP**: 3-step self-service password recovery flow (`/forgot-password`). Issues cryptographically secure 6-digit one-time codes with SHA-256 hashing and 10-minute expiry via Nodemailer (Gmail / custom SMTP) or console fallback.
+- **Session Invalidation**: Automatically revokes and refreshes authentication tokens upon successful password changes to terminate any compromised active sessions.
+
+### 3. Universal Multi-Format Inline Previewer
 - **PDF Documents**: Direct embedded reader using `Content-Disposition: inline` and proper MIME negotiation, eliminating unwanted forced downloads.
 - **Images**: Interactive lightbox with Zoom In/Out, 90° rotation, and pan controls.
 - **Videos**: Built-in HTML5 streaming player with playback speed and fullscreen controls.
 - **Audio**: Custom streaming audio player with track progress scrubbing and volume controls.
 - **Code & Plain Text**: Monospace viewer with line numbering and one-click copy to clipboard.
 
-### 3. Real-Time Collaboration & Document Discussions
+### 4. Real-Time Collaboration & Document Discussions
 - **Socket.IO File Rooms**: Users automatically join real-time rooms (`file:${id}`) upon opening any document preview.
 - **Live Comments**: Create, edit, and delete comments with instantaneous bi-directional broadcast to all active collaborators.
 - **Typing & Activity Signals**: Real-time visual feedback when team members interact with shared files.
 - **Real-Time Notification Bell**: Animated in-app notification bell with unread badge counters and live push alerts.
 
-### 4. Granular RBAC & Protected Share Links
+### 5. Granular RBAC & Protected Share Links
 - **Role-Based Sharing**: Share files and folders with registered users under specific roles:
   - **Viewer**: Read-only preview and download rights.
   - **Commenter**: Preview, download, and participate in comment threads.
@@ -47,19 +54,19 @@
   - **Expiration Timers**: Automatically revokes access after custom durations.
   - **Download Tracking**: Real-time count of public link access and file downloads.
 
-### 5. Snapshot Version History & 30-Day Trash Bin
+### 6. Snapshot Version History & 30-Day Trash Bin
 - **Immutable Version History**: Every version upload creates a distinct snapshot version without overwriting past iterations.
 - **One-Click Version Restore**: Roll back to any historical snapshot instantly while preserving all intermediate versions.
 - **Two-Stage Soft Deletion**: Deleted files move to the Trash Bin with a 30-day recovery buffer.
 - **Scheduled Auto-Purge**: Background cron scheduler cleans up expired trash items automatically to reclaim cloud storage space.
 - **Bulk Empty & Selective Permanent Delete**: Permanently purge individual items or empty the entire trash bin with confirmation safeguards.
 
-### 6. Search, Filter & Discovery Hub
+### 7. Search, Filter & Discovery Hub
 - **Universal Autocomplete Search**: Search files and folders simultaneously by filename, extension, or folder hierarchy.
 - **Multi-Dimension Filters**: Filter by file type (`Documents`, `Images`, `Videos`, `Audio`, `Spreadsheets`, `Archives`), date ranges (`Today`, `Last 7 Days`, `Last 30 Days`), and star status.
 - **Starred & Recent Shortcuts**: Quick-access views for priority items and recently modified documents.
 
-### 7. Custom Dialogs & Dual-Theme Engine
+### 8. Custom Dialogs & Dual-Theme Engine
 - **Custom Confirmation Modal (`ConfirmModal`)**: Replaced all native browser `confirm()` and `alert()` popups with styled dialogs featuring action-specific variants (`danger`, `warning`, `primary`, `success`), loading spinners, and keyboard shortcuts (`Escape` / `Enter`).
 - **Dark & Light Mode**: Tailored HSL color palette with smooth CSS transitions and dark mode persistence via `ThemeContext`.
 
@@ -77,9 +84,10 @@
 | **Backend Runtime** | [Node.js](https://nodejs.org/) & [Express](https://expressjs.com/) | RESTful API server with TypeScript |
 | **Database** | [PostgreSQL](https://www.postgresql.org/) (Neon Serverless) | Relational database with composite indexing |
 | **ORM** | [Prisma ORM 6](https://www.prisma.io/) | Type-safe schema migrations & query builder |
-| **Object Storage** | [Cloudflare R2](https://www.cloudflare.com/products/r2/) / [AWS S3](https://aws.amazon.com/s3/) | High-availability blob storage with presigned URLs |
+| **Cloud Storage** | [Backblaze B2](https://www.backblaze.com/b2/) / [Cloudflare R2](https://www.cloudflare.com/products/r2/) / [AWS S3](https://aws.amazon.com/s3/) | S3-compatible object storage with presigned multipart URLs |
 | **Local Storage** | Custom `MockStorageProvider` | Local disk storage emulator for zero-dependency development |
-| **Security & Auth** | JWT & Bcrypt | HTTP-only cookie tokens, bcrypt salt hashing, Helmet security |
+| **Email Service** | [Nodemailer](https://nodemailer.com/) | SMTP mailer for 6-digit OTP password resets (with console fallback) |
+| **Security & Auth** | JWT, Bcrypt & HTML5 Canvas | HTTP-only cookie tokens, bcrypt salt hashing, anti-bot visual Captcha |
 | **Background Tasks** | Node-cron | Scheduled 30-day soft-delete trash purge worker |
 
 ---
@@ -89,18 +97,19 @@
 ```
 FileManager/
 ├── prisma/
-│   └── schema.prisma                 # Database schema: User, File, Folder, Version, Permission, ShareLink, Comment
+│   └── schema.prisma                 # Database schema: User, File, Folder, Version, Permission, ShareLink, Comment, PasswordResetToken
 ├── backend/
 │   ├── src/
 │   │   ├── config/                   # Database, storage providers, CORS, and environment loader
 │   │   ├── controllers/              # REST controllers (auth, file, folder, version, share, comment, trash)
+│   │   ├── email/                    # Email service interface, Nodemailer SMTP provider & console fallback
 │   │   ├── jobs/                     # Cron scheduler for 30-day automated trash purge
 │   │   ├── middleware/               # Auth guard, rate limiters, request validation, error handler
 │   │   ├── repositories/             # Prisma data access layer with composite permission queries
 │   │   ├── routes/                   # Route dispatchers (/api/auth, /api/files, /api/shared, etc.)
-│   │   ├── services/                 # Business logic, permissions enforcement, and download URLs
+│   │   ├── services/                 # Business logic, permissions enforcement, download URLs, OTP password resets
 │   │   ├── socket/                   # Socket.IO room manager & real-time collaboration events
-│   │   ├── storage/                  # StorageProvider contract (Cloudflare R2, S3, MockStorage)
+│   │   ├── storage/                  # StorageProvider contract (Backblaze B2, Cloudflare R2, AWS S3, MockStorage)
 │   │   ├── utils/                    # ApiError, logger, token signers, formatters
 │   │   ├── app.ts                    # Express application setup & middleware stack
 │   │   └── server.ts                 # HTTP server bootstrap & WebSocket lifecycle
@@ -108,7 +117,7 @@ FileManager/
 │   └── tsconfig.json
 ├── frontend/
 │   ├── app/
-│   │   ├── (auth)/                   # Authentication pages: /login, /register
+│   │   ├── (auth)/                   # Authentication pages: /login, /register, /forgot-password
 │   │   ├── (dashboard)/              # Main dashboard: /dashboard, /trash, /starred, /recent, /search
 │   │   │   ├── layout.tsx            # Dashboard layout with sidebar navigation & top search header
 │   │   │   └── page.tsx              # Primary file manager workspace view
@@ -124,7 +133,7 @@ FileManager/
 │   │   ├── notifications/            # NotificationBell popover & unread counter
 │   │   ├── search/                   # GlobalSearchBar with dropdown autocomplete
 │   │   ├── sharing/                  # ShareModal (collaborator RBAC & public link generator)
-│   │   ├── ui/                       # ConfirmModal (custom dark/light dialogs), ThemeToggle
+│   │   ├── ui/                       # Captcha (Canvas anti-bot), ConfirmModal (custom dialogs), ThemeToggle
 │   │   ├── upload/                   # Chunked upload progress drawer & drag-and-drop overlay
 │   │   └── Footer.tsx                # Global creator attribution footer
 │   ├── context/                      # AuthContext, ThemeContext, UploadContext
@@ -145,7 +154,8 @@ Ensure you have the following installed:
 - [Node.js](https://nodejs.org/) version 18.x or higher
 - `npm`, `pnpm`, or `yarn`
 - A [PostgreSQL Database](https://neon.tech/) instance (Neon serverless or local Postgres)
-- *(Optional)* A [Cloudflare R2](https://www.cloudflare.com/products/r2/) or [AWS S3](https://aws.amazon.com/s3/) account (defaults to local mock storage if omitted)
+- *(Optional)* A [Backblaze B2](https://www.backblaze.com/b2/), [Cloudflare R2](https://www.cloudflare.com/products/r2/), or [AWS S3](https://aws.amazon.com/s3/) account (defaults to local mock storage if omitted)
+- *(Optional)* An SMTP email account (e.g. Gmail App Password) for sending OTP password reset emails (defaults to console logging if omitted)
 
 ### 2. Clone Repository
 ```bash
@@ -183,12 +193,22 @@ DATABASE_URL="postgresql://<user>:<password>@<host>/<dbname>?sslmode=require"
 JWT_ACCESS_SECRET="your-super-secure-access-token-secret-32-chars-min"
 JWT_REFRESH_SECRET="your-super-secure-refresh-token-secret-32-chars-min"
 
-# Cloudflare R2 / AWS S3 Object Storage
+# Cloud Storage: Backblaze B2 / Cloudflare R2 / AWS S3
 # (Leave empty to use built-in local mock storage)
-R2_ACCOUNT_ID=""
-R2_ACCESS_KEY_ID=""
-R2_SECRET_ACCESS_KEY=""
-R2_BUCKET_NAME="filevault"
+R2_ACCESS_KEY_ID="your-key-id"
+R2_SECRET_ACCESS_KEY="your-application-key"
+R2_BUCKET_NAME="your-bucket-name"
+R2_ENDPOINT="https://s3.<region>.backblazeb2.com" # Or Cloudflare: https://<account_id>.r2.cloudflarestorage.com
+# R2_ACCOUNT_ID="your-account-id" # Optional for Cloudflare R2
+
+# Email / SMTP Configuration (for OTP Password Reset)
+# (Leave empty to print OTPs directly to backend console)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-gmail-16-char-app-password"
+SMTP_FROM="FileVault Security <your-email@gmail.com>"
 ```
 
 Create a `.env.local` file inside the `frontend/` directory:
@@ -277,6 +297,8 @@ graph TD
 4. **Collision-Resistant CUIDs**: All database entities use collision-resistant `cuid()` identifiers instead of auto-incrementing integers, preventing enumeration attacks.
 5. **Two-Tier Deletion Protection**: Soft-deleted files are safely stored in a 30-day trash buffer before being eligible for permanent garbage collection.
 6. **Sliding-Window Rate Limiting**: Protects sensitive endpoints (authentication, file downloads, public password verification) against automated brute-force attacks.
+7. **Interactive Visual Anti-Bot Captcha**: Canvas-rendered alphanumeric challenge defends authentication endpoints against automated bot attacks and credential stuffing without tracking user privacy.
+8. **SHA-256 Hashed OTP Recovery**: 6-digit one-time password reset codes are hashed using SHA-256 in the database, enforced with a strict 10-minute TTL, and immediately invalidate all prior active user sessions upon completion.
 
 ---
 

@@ -19,6 +19,13 @@ interface AuthContextType {
   register: (data: { name: string; email: string; password: string; confirmPassword: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  resetPassword: (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,6 +152,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    return api.post<{ success: boolean; message: string }>("/api/auth/forgot-password", { email });
+  };
+
+  const resetPassword = async (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    return api.post<{ success: boolean; message: string }>("/api/auth/reset-password", data);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -155,6 +175,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         refreshUser,
+        forgotPassword,
+        resetPassword,
       }}
     >
       {children}

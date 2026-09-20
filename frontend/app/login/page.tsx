@@ -7,6 +7,7 @@ import { Folder, ArrowRight, ArrowLeft, Loader2, AlertCircle } from "lucide-reac
 import { useAuth } from "@/context/AuthContext";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import Captcha from "@/components/ui/Captcha";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,12 +16,29 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [challengeCode, setChallengeCode] = useState("");
+  const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validate Captcha
+    if (!captchaInput.trim()) {
+      setError("Please enter the security verification code.");
+      return;
+    }
+
+    if (captchaInput.trim() !== challengeCode) {
+      setError("Incorrect security verification code. Please try again.");
+      setCaptchaInput("");
+      setCaptchaRefreshKey((prev) => prev + 1);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -28,6 +46,8 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Invalid email or password");
+      setCaptchaInput("");
+      setCaptchaRefreshKey((prev) => prev + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,13 +89,13 @@ export default function LoginPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-slate-900/90 py-8 px-6 shadow-sm border border-slate-200/80 dark:border-slate-800 sm:rounded-2xl sm:px-10">
           {error && (
-            <div className="mb-5 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/70 p-3 text-xs text-rose-700">
+            <div className="mb-5 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/70 p-3 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-300">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
               <span>{error}</span>
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label
                 htmlFor="email"
@@ -106,12 +126,12 @@ export default function LoginPage() {
                 >
                   Password
                 </label>
-                <a
-                  href="#forgot"
+                <Link
+                  href="/forgot-password"
                   className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="mt-1.5">
                 <input
@@ -128,7 +148,17 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center">
+            {/* Alphanumeric Anti-Bot Captcha */}
+            <div className="pt-1">
+              <Captcha
+                value={captchaInput}
+                onChange={setCaptchaInput}
+                onChallengeChange={setChallengeCode}
+                refreshKey={captchaRefreshKey}
+              />
+            </div>
+
+            <div className="flex items-center pt-1">
               <input
                 id="remember-me"
                 name="remember-me"
@@ -145,7 +175,7 @@ export default function LoginPage() {
               </label>
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting}

@@ -28,12 +28,23 @@ export class R2StorageProvider implements StorageProvider {
 
   constructor(config: R2Config) {
     this.bucket = config.bucketName;
-    const endpoint =
+    let endpoint =
       config.endpoint ||
       `https://${config.accountId}.r2.cloudflarestorage.com`;
 
+    if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
+      endpoint = `https://${endpoint}`;
+    }
+
+    // Auto-detect region: Backblaze B2 endpoints specify region (e.g. s3.us-west-004.backblazeb2.com)
+    let region = "auto";
+    const b2Match = endpoint.match(/s3\.([a-z0-9-]+)\.backblazeb2\.com/i);
+    if (b2Match) {
+      region = b2Match[1];
+    }
+
     this.client = new S3Client({
-      region: "auto",
+      region,
       endpoint,
       credentials: {
         accessKeyId: config.accessKeyId,

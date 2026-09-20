@@ -4,6 +4,7 @@ import { versionController } from "../controllers/version.controller";
 import { requireAuth } from "../middleware/auth";
 
 const upload = multer({
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 100 * 1024 * 1024, // 100 MB max for direct version uploads
   },

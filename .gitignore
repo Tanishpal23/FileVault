@@ -21,7 +21,11 @@ build/
 # Local Mock Storage & Uploads
 backend/storage_local/
 storage_local/
+storage_data/
+*/storage_data/
 uploads/
+*.dummy.md
+*dummy*
 
 # Logs
 *.log

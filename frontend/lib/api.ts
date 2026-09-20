@@ -367,10 +367,7 @@ export const versionApi = {
     formData.append("file", file);
     return api.post<{ success: boolean; message: string; versionNumber: number }>(
       `/api/files/${fileId}/versions`,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
+      formData
     );
   },
 };
@@ -445,5 +442,21 @@ export const activityApi = {
   byResource: (resourceId: string, limit = 20) =>
     api.get<ActivityItem[]>(`/api/activities/resource/${resourceId}?limit=${limit}`),
 };
+
+export const authApi = {
+  forgotPassword: (email: string) =>
+    api.post<{ success: boolean; message: string }>("/api/auth/forgot-password", { email }),
+
+  verifyOtp: (email: string, otp: string) =>
+    api.post<{ success: boolean; message: string }>("/api/auth/verify-otp", { email, otp }),
+
+  resetPassword: (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => api.post<{ success: boolean; message: string }>("/api/auth/reset-password", data),
+};
+
 
 

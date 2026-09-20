@@ -11,12 +11,13 @@ export function getStorageProvider(): StorageProvider {
   }
 
   const hasR2Config =
-    Boolean(env.R2_ACCOUNT_ID) &&
+    (Boolean(env.R2_ACCOUNT_ID) || Boolean(env.R2_ENDPOINT)) &&
     Boolean(env.R2_ACCESS_KEY_ID) &&
     Boolean(env.R2_SECRET_ACCESS_KEY);
 
   if (hasR2Config) {
-    console.log("☁️  Using Cloudflare R2 Storage Provider");
+    const isB2 = env.R2_ENDPOINT?.includes("backblazeb2.com");
+    console.log(`☁️  Using ${isB2 ? "Backblaze B2" : "Cloudflare R2"} S3 Storage Provider`);
     storageInstance = new R2StorageProvider({
       accountId: env.R2_ACCOUNT_ID,
       accessKeyId: env.R2_ACCESS_KEY_ID,
