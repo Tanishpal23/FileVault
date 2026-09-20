@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  VIEWER
+  COMMENTER
+  EDITOR
+}
+
+enum FileStatus {
+  UPLOADING
+  PROCESSING
+  AVAILABLE
+  QUARANTINED
+  FAILED
+  DELETED
+}
+
+enum UploadStatus {
+  INITIALIZED
+  UPLOADING
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String?
+  avatarUrl     String?
+  storageQuota  BigInt    @default(10737418240) // 10 GB in bytes
+  storageUsed   BigInt    @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions           Session[]
+  oauthAccounts      OAuthAccount[]
+  passwordResets     PasswordResetToken[]
+  folders            Folder[]
+  files              File[]               @relation("OwnerFiles")
+  fileVersions       FileVersion[]
+  filePermissions    FilePermission[]
+  comments           Comment[]
+  notifications      Notification[]
+  activities         Activity[]
+  starredFiles       StarredFile[]
+  uploadSessions     UploadSession[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String   // e.g. "google"
+  providerAccountId String
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model Folder {
+  id        String    @id @default(cuid())
+  ownerId   String
+  parentId  String?
+  name      String
+  color     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  parent    Folder?  @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  subFolders Folder[] @relation("SubFolders")
+  files     File[]
+
+  @@index([ownerId, parentId, deletedAt])
+  @@map("folders")
+}
+
+model File {
+  id               String     @id @default(cuid())
+  ownerId          String
+  folderId         String?
+  name             String
+  originalName     String
+  mimeType         String
+  size             BigInt
+  storageKey       String     @unique
+  checksum         String?
+  status           FileStatus @default(UPLOADING)
+  currentVersionId String?    @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  owner          User             @relation("OwnerFiles", fields: [ownerId], references: [id], onDelete: Cascade)
+  folder         Folder?          @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  currentVersion FileVersion?     @relation("CurrentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+  versions       FileVersion[]    @relation("FileVersions")
+  permissions    FilePermission[]
+  shareLinks     ShareLink[]
+  comments       Comment[]
+  starredBy      StarredFile[]
+  uploadSessions UploadSession[]
+
+  @@index([ownerId, folderId, deletedAt])
+  @@index([ownerId, status])
+  @@map("files")
+}
+
+model FileVersion {
+  id            String   @id @default(cuid())
+  fileId        String
+  versionNumber Int
+  storageKey    String   @unique
+  size          BigInt
+  checksum      String?
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  file          File     @relation("FileVersions", fields: [fileId], references: [id], onDelete: Cascade)
+  createdBy     User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  currentInFile File?    @relation("CurrentVersion")
+
+  @@unique([fileId, versionNumber])
+  @@index([fileId])
+  @@map("file_versions")
+}
+
+model FilePermission {
+  id        String   @id @default(cuid())
+  fileId    String
+  userId    String
+  role      Role     @default(VIEWER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fileId, userId])
+  @@index([userId])
+  @@map("file_permissions")
+}
+
+model ShareLink {
+  id            String    @id @default(cuid())
+  fileId        String
+  token         String    @unique
+  passwordHash  String?
+  role          Role      @default(VIEWER)
+  expiresAt     DateTime?
+  downloadLimit Int?
+  downloadCount Int       @default(0)
+  isRevoked     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  file      File                @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  downloads ShareLinkDownload[]
+
+  @@index([token])
+  @@index([fileId])
+  @@map("share_links")
+}
+
+model ShareLinkDownload {
+  id          String   @id @default(cuid())
+  shareLinkId String
+  ipAddress   String?
+  userAgent   String?
+  downloadedAt DateTime @default(now())
+
+  shareLink ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+
+  @@index([shareLinkId])
+  @@map("share_link_downloads")
+}
+
+model UploadSession {
+  id          String       @id @default(cuid())
+  userId      String
+  fileId      String?
+  r2UploadId  String
+  storageKey  String
+  filename    String
+  mimeType    String
+  fileSize    BigInt
+  chunkSize   Int
+  totalParts  Int
+  status      UploadStatus @default(INITIALIZED)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  expiresAt   DateTime
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file  File?        @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  parts UploadPart[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("upload_sessions")
+}
+
+model UploadPart {
+  id              String   @id @default(cuid())
+  uploadSessionId String
+  partNumber      Int
+  etag            String
+  size            Int
+  uploadedAt      DateTime @default(now())
+
+  uploadSession UploadSession @relation(fields: [uploadSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([uploadSessionId, partNumber])
+  @@map("upload_parts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  fileId    String
+  authorId  String
+  content   String
+  editedAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  file   File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+  @@map("comments")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    // e.g. "FILE_SHARED", "COMMENT_ADDED", "LINK_EXPIRING"
+  title     String
+  message   String
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model Activity {
+  id           String   @id @default(cuid())
+  actorId      String
+  action       String   // e.g. "FILE_UPLOADED", "FILE_DOWNLOADED", "FILE_SHARED"
+  resourceId   String
+  resourceType String   // "FILE" or "FOLDER"
+  resourceName String
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([actorId, createdAt])
+  @@index([resourceId])
+  @@map("activities")
+}
+
+model StarredFile {
+  userId    String
+  fileId    String
+  starredAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@id([userId, fileId])
+  @@map("starred_files")
+}
