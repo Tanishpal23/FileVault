@@ -30,6 +30,9 @@ const envSchema = z.object({
   SMTP_FROM: z.string().optional().default("FileVault <no-reply@filevault.com>"),
   RESEND_API_KEY: z.string().optional().default(""),
   RESEND_FROM: z.string().optional().default("FileVault <onboarding@resend.dev>"),
+  BREVO_API_KEY: z.string().optional().default(""),
+  BREVO_SENDER_EMAIL: z.string().optional().default("fiilevault@gmail.com"),
+  BREVO_SENDER_NAME: z.string().optional().default("FileVault"),
 });
 
 const parsed = envSchema.safeParse(process.env);

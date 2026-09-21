@@ -88,6 +88,54 @@ export class ResendEmailProvider implements IEmailProvider {
   }
 }
 
+export class BrevoEmailProvider implements IEmailProvider {
+  constructor(
+    private apiKey: string,
+    private senderEmail: string,
+    private senderName: string
+  ) {
+    console.log("📧 Brevo HTTPS Email Provider initialized (Port 443)");
+  }
+
+  async sendEmail(options: EmailOptions): Promise<boolean> {
+    try {
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "api-key": this.apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          sender: {
+            name: this.senderName || "FileVault",
+            email: this.senderEmail || "fiilevault@gmail.com",
+          },
+          to: [
+            {
+              email: options.to,
+            },
+          ],
+          subject: options.subject,
+          htmlContent: options.html,
+          textContent: options.text,
+        }),
+      });
+
+      const data: any = await response.json();
+      if (!response.ok) {
+        console.error("❌ Brevo API error:", data);
+        return false;
+      }
+      console.log(`📧 Email sent successfully to ${options.to} via Brevo (MessageId: ${data.messageId})`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to send email via Brevo to ${options.to}:`, error);
+      return false;
+    }
+  }
+}
+
 export class ConsoleEmailProvider implements IEmailProvider {
   async sendEmail(options: EmailOptions): Promise<boolean> {
     console.log("\n================== 📧 OUTGOING EMAIL (DEV CONSOLE) ==================");
@@ -104,12 +152,18 @@ export class EmailService {
   private provider: IEmailProvider;
 
   constructor() {
-    if (env.RESEND_API_KEY) {
+    if (env.BREVO_API_KEY) {
+      this.provider = new BrevoEmailProvider(
+        env.BREVO_API_KEY,
+        env.BREVO_SENDER_EMAIL,
+        env.BREVO_SENDER_NAME
+      );
+    } else if (env.RESEND_API_KEY) {
       this.provider = new ResendEmailProvider(env.RESEND_API_KEY, env.RESEND_FROM);
     } else if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
       this.provider = new NodemailerEmailProvider();
     } else {
-      console.log("📧 Using Console Email Provider (Set RESEND_API_KEY or SMTP_HOST in .env for real delivery)");
+      console.log("📧 Using Console Email Provider (Set BREVO_API_KEY, RESEND_API_KEY or SMTP_HOST in .env for real delivery)");
       this.provider = new ConsoleEmailProvider();
     }
   }

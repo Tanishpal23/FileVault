@@ -138,7 +138,7 @@ export class AuthService {
     });
 
     if (!delivered) {
-      throw ApiError.internal("Failed to send verification email. Please check your SMTP settings or try again later.");
+      throw ApiError.internal("Failed to send verification email. Please try again later.");
     }
 
     return {
