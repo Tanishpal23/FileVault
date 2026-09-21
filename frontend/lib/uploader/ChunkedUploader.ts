@@ -63,13 +63,29 @@ export class ChunkedUploader {
   constructor(options: ChunkedUploaderOptions) {
     this.file = options.file;
     this.folderId = options.folderId;
-    this.apiUrl = options.apiUrl || "http://localhost:5000";
+    this.apiUrl = (
+      options.apiUrl ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:5000"
+    ).replace(/\/$/, "");
     this.chunkSize = options.chunkSize || DEFAULT_CHUNK_SIZE;
     this.maxConcurrency = options.maxConcurrency || DEFAULT_CONCURRENCY;
     this.onProgress = options.onProgress;
     this.onStateChange = options.onStateChange;
     this.onComplete = options.onComplete;
     this.onError = options.onError;
+  }
+
+  private getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = { ...extraHeaders };
+    if (typeof window !== "undefined") {
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("filevault_token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+    return headers;
   }
 
   private setState(state: UploadState, errorMsg?: string) {
@@ -181,6 +197,14 @@ export class ChunkedUploader {
       xhr.open("POST", `${this.apiUrl}/api/uploads/direct`, true);
       xhr.withCredentials = true;
 
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("accessToken") || localStorage.getItem("filevault_token")
+          : null;
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
@@ -220,7 +244,7 @@ export class ChunkedUploader {
     const res = await fetch(`${this.apiUrl}/api/uploads/initiate`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: this.getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         filename: this.file.name,
         mimeType: this.file.type || "application/octet-stream",
@@ -250,6 +274,7 @@ export class ChunkedUploader {
     try {
       const res = await fetch(`${this.apiUrl}/api/uploads/${sessionId}/status`, {
         credentials: "include",
+        headers: this.getAuthHeaders(),
       });
       if (!res.ok) return false;
 
@@ -345,7 +370,10 @@ export class ChunkedUploader {
     // 1. Get presigned part URL
     const urlRes = await fetch(
       `${this.apiUrl}/api/uploads/${this.uploadSessionId}/parts/${partNumber}/url`,
-      { credentials: "include" }
+      {
+        credentials: "include",
+        headers: this.getAuthHeaders(),
+      }
     );
     if (!urlRes.ok) {
       throw new Error(`Failed to get URL for part ${partNumber}`);
@@ -385,7 +413,7 @@ export class ChunkedUploader {
       {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: this.getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ etag: `"${etag}"`, size: chunkSize }),
       }
     );
@@ -415,7 +443,7 @@ export class ChunkedUploader {
     const res = await fetch(`${this.apiUrl}/api/uploads/${this.uploadSessionId}/complete`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: this.getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         folderId: this.folderId || null,
         parts,

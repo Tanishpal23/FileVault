@@ -7,6 +7,10 @@ import {
   UploadState,
 } from "@/lib/uploader/ChunkedUploader";
 
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/$/, "");
+
 export interface UploadItem {
   id: string;
   file: File;
@@ -76,6 +80,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         const uploader = new ChunkedUploader({
           file,
           folderId: targetFolderId,
+          apiUrl: API_URL,
           onProgress: (progress) => {
             setUploads((prev) =>
               prev.map((item) => (item.id === id ? { ...item, progress } : item))
@@ -167,6 +172,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       const uploader = new ChunkedUploader({
         file: item.file,
         folderId: item.folderId,
+        apiUrl: API_URL,
         onProgress: (progress) => {
           setUploads((prev) =>
             prev.map((u) => (u.id === id ? { ...u, progress } : u))

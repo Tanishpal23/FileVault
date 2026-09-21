@@ -62,7 +62,13 @@ export async function apiRequest<T = any>(
       }
     }
 
-    const errorMsg = json.error?.message || `Request failed with status ${response.status}`;
+    const firstDetail = json.error?.details && typeof json.error.details === "object"
+      ? Object.values(json.error.details).flat()[0]
+      : null;
+    const errorMsg =
+      (firstDetail ? String(firstDetail) : null) ||
+      json.error?.message ||
+      `Request failed with status ${response.status}`;
     const err = new Error(errorMsg) as any;
     err.code = json.error?.code || "API_ERROR";
     err.status = response.status;

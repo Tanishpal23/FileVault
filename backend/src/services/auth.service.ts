@@ -233,7 +233,7 @@ export class AuthService {
     const accessToken = jwt.sign(
       { userId, email, name },
       env.JWT_ACCESS_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "7d" }
     );
 
     const refreshToken = crypto.randomBytes(40).toString("hex");
@@ -250,7 +250,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: 900, // 15 minutes in seconds
+      expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
     };
   }
 }

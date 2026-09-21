@@ -23,6 +23,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
+    if (name.trim().length < 2) {
+      setError("Name must be at least 2 characters");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -33,10 +38,30 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!/[A-Z]/.test(password)) {
+      setError("Password must contain at least one uppercase letter (A-Z)");
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      setError("Password must contain at least one lowercase letter (a-z)");
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      setError("Password must contain at least one number (0-9)");
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      setError("Password must contain at least one special character (!@#$%^&*...)");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await register({ name, email, password, confirmPassword });
+      await register({ name: name.trim(), email: email.trim(), password, confirmPassword });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please check your details.");

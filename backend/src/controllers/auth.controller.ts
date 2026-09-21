@@ -15,7 +15,7 @@ export class AuthController {
   register = asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.register(req.body);
 
-    res.cookie("accessToken", result.accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie("accessToken", result.accessToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
     res.cookie("refreshToken", result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(201).json({
@@ -39,7 +39,7 @@ export class AuthController {
       ? 30 * 24 * 60 * 60 * 1000 // 30 days
       : 7 * 24 * 60 * 60 * 1000; // 7 days
 
-    res.cookie("accessToken", result.accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie("accessToken", result.accessToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
     res.cookie("refreshToken", result.refreshToken, getCookieOptions(refreshMaxAge));
 
     res.status(200).json({
@@ -74,7 +74,7 @@ export class AuthController {
     const token = req.cookies?.refreshToken || req.body.refreshToken;
     const result = await authService.refresh(token);
 
-    res.cookie("accessToken", result.accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie("accessToken", result.accessToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
     res.cookie("refreshToken", result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(200).json({

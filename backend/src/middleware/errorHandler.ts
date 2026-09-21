@@ -23,7 +23,8 @@ export function errorHandler(
   } else if (err instanceof ZodError) {
     statusCode = 400;
     code = "VALIDATION_ERROR";
-    message = "Invalid request payload";
+    const firstIssue = err.issues?.[0];
+    message = firstIssue?.message || "Invalid request payload";
     details = err.flatten().fieldErrors;
   } else if (err.name === "JsonWebTokenError") {
     statusCode = 401;

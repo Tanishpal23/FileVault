@@ -70,12 +70,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = async (credentials: { email: string; password: string; rememberMe?: boolean }) => {
-    const res = await api.post<{ user: User; accessToken?: string }>("/api/auth/login", credentials);
+    const res = await api.post<{ user: User; accessToken?: string; refreshToken?: string }>("/api/auth/login", credentials);
     setUser(res.user);
     if (typeof window !== "undefined") {
       localStorage.setItem("filevault_user", JSON.stringify(res.user));
       if (res.accessToken) {
         localStorage.setItem("accessToken", res.accessToken);
+      }
+      if (res.refreshToken) {
+        localStorage.setItem("refreshToken", res.refreshToken);
       }
     }
   };
@@ -95,19 +98,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: { name: string; email: string; password: string; confirmPassword: string }) => {
-    const res = await api.post<{ user: User; accessToken?: string }>("/api/auth/register", data);
+    const res = await api.post<{ user: User; accessToken?: string; refreshToken?: string }>("/api/auth/register", data);
     setUser(res.user);
     if (typeof window !== "undefined") {
       localStorage.setItem("filevault_user", JSON.stringify(res.user));
       if (res.accessToken) {
         localStorage.setItem("accessToken", res.accessToken);
       }
+      if (res.refreshToken) {
+        localStorage.setItem("refreshToken", res.refreshToken);
+      }
     }
   };
 
   const logout = async () => {
     try {
-      await api.post("/api/auth/logout", {});
+      const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : undefined;
+      await api.post("/api/auth/logout", { refreshToken });
     } catch {
       // Ignored
     } finally {
@@ -115,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("filevault_user");
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         localStorage.removeItem("filevault_token");
       }
     }
