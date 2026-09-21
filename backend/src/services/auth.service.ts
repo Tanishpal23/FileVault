@@ -106,12 +106,8 @@ export class AuthService {
     const cleanEmail = email.trim().toLowerCase();
     const user = await userRepository.findByEmail(cleanEmail);
 
-    // If user doesn't exist, return generic success to avoid user enumeration
     if (!user) {
-      return {
-        success: true,
-        message: "If an account with that email exists, an OTP has been sent.",
-      };
+      throw ApiError.notFound("No account found with this email address.", "USER_NOT_FOUND");
     }
 
     // Generate 6-digit OTP
@@ -133,13 +129,17 @@ export class AuthService {
       },
     });
 
-    // Dispatch email (or console log if dev)
+    // Dispatch email
     const { emailService } = await import("../email/email.service");
-    await emailService.sendPasswordResetOtp({
+    const delivered = await emailService.sendPasswordResetOtp({
       recipientEmail: user.email,
       recipientName: user.name,
       otp,
     });
+
+    if (!delivered) {
+      throw ApiError.internal("Failed to send verification email. Please check your SMTP settings or try again later.");
+    }
 
     return {
       success: true,
