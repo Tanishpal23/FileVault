@@ -123,6 +123,16 @@ export class AuthController {
       data: result,
     });
   });
+
+  deleteAccount = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.deleteAccount(req.user!.id, req.body?.password);
+    res.clearCookie("accessToken", getCookieOptions());
+    res.clearCookie("refreshToken", getCookieOptions());
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }
 
 export const authController = new AuthController();

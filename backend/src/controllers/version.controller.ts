@@ -15,7 +15,8 @@ export class VersionController {
   async download(req: Request, res: Response) {
     const fileId = req.params.id as string;
     const versionId = req.params.versionId as string;
-    const result = await versionService.getDownloadUrl(req.user!.id, fileId, versionId);
+    const disposition = (req.query.disposition as "inline" | "attachment") || "attachment";
+    const result = await versionService.getDownloadUrl(req.user!.id, fileId, versionId, disposition);
     res.json({
       success: true,
       ...result,

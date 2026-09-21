@@ -18,7 +18,7 @@ import {
   Music,
   Maximize2,
 } from "lucide-react";
-import { FileItem, fileApi } from "@/lib/api";
+import { FileItem, fileApi, downloadFile } from "@/lib/api";
 import { CommentThread } from "@/components/comments/CommentThread";
 
 interface FilePreviewModalProps {
@@ -243,13 +243,7 @@ export default function FilePreviewModal({
                 type="button"
                 onClick={async () => {
                   try {
-                    const res = await fileApi.getDownloadUrl(file.id, "attachment");
-                    const link = document.createElement("a");
-                    link.href = res.downloadUrl;
-                    link.download = file.name;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    await downloadFile(file);
                   } catch {
                     window.open(downloadUrl, "_blank");
                   }

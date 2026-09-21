@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { userRepository } from "../repositories/user.repository";
 import { ApiError } from "../utils/ApiError";
 import { prisma } from "../config/database";
+import { storage } from "../config/storage";
 
 export class AuthService {
   async register(data: { name: string; email: string; password: string }) {
@@ -220,6 +221,56 @@ export class AuthService {
     return {
       success: true,
       message: "Your password has been successfully reset. Please sign in with your new password.",
+    };
+  }
+
+  async deleteAccount(userId: string, password?: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw ApiError.notFound("User not found");
+    }
+
+    // Require password confirmation if user has a password set
+    if (user.passwordHash) {
+      if (!password) {
+        throw ApiError.badRequest("Password is required to delete your account");
+      }
+      const matches = await bcrypt.compare(password, user.passwordHash);
+      if (!matches) {
+        throw ApiError.forbidden("Incorrect password");
+      }
+    }
+
+    // Find all files and file versions owned by this user to clean up from storage
+    const files = await prisma.file.findMany({
+      where: { ownerId: userId },
+      select: { storageKey: true },
+    });
+    const versions = await prisma.fileVersion.findMany({
+      where: { file: { ownerId: userId } },
+      select: { storageKey: true },
+    });
+
+    const storageKeys = [
+      ...files.map((f) => f.storageKey),
+      ...versions.map((v) => v.storageKey),
+    ];
+
+    // Best-effort removal of physical files from storage
+    await Promise.allSettled(
+      storageKeys.map((key) => storage.delete(key))
+    );
+
+    // Delete user from DB (Cascades to folders, files, versions, shares, comments, sessions, activities, notifications)
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return {
+      success: true,
+      message: "Account and all associated files successfully deleted",
     };
   }
 

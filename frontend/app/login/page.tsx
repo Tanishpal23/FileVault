@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Folder, ArrowRight, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Folder, ArrowRight, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -22,6 +22,16 @@ export default function LoginPage() {
   const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletedMsg, setDeletedMsg] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("deleted") === "true") {
+        setDeletedMsg(true);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +99,13 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-slate-900/90 py-8 px-6 shadow-sm border border-slate-200/80 dark:border-slate-800 sm:rounded-2xl sm:px-10">
+          {deletedMsg && (
+            <div className="mb-5 flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200/70 p-3 text-xs text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              <span>Your account and all associated files have been permanently deleted.</span>
+            </div>
+          )}
+
           {error && (
             <div className="mb-5 flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200/70 p-3 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-300">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />

@@ -22,5 +22,6 @@ router.get("/me", requireAuth, authController.me);
 router.post("/forgot-password", validateBody(forgotPasswordSchema), authController.forgotPassword);
 router.post("/verify-otp", validateBody(verifyOtpSchema), authController.verifyOtp);
 router.post("/reset-password", validateBody(resetPasswordSchema), authController.resetPassword);
+router.delete("/account", requireAuth, authController.deleteAccount);
 
 export default router;

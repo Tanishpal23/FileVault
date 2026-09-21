@@ -159,7 +159,7 @@ export const fileApi = {
     api.delete<{ success: boolean; message: string }>(`/api/files/${id}`),
   toggleStar: (id: string) =>
     api.post<{ success: boolean; fileId: string; isStarred: boolean }>(`/api/files/${id}/star`),
-  getDownloadUrl: (id: string, disposition: "inline" | "attachment" = "inline") =>
+  getDownloadUrl: (id: string, disposition: "inline" | "attachment" = "attachment") =>
     api.get<{
       success: boolean;
       file: { id: string; name: string; mimeType: string; size: string };
@@ -366,9 +366,13 @@ export const versionApi = {
       versions: FileVersionItem[];
     }>(`/api/files/${fileId}/versions`),
 
-  getDownloadUrl: (fileId: string, versionId: string) =>
+  getDownloadUrl: (
+    fileId: string,
+    versionId: string,
+    disposition: "inline" | "attachment" = "attachment"
+  ) =>
     api.get<{ versionNumber: number; downloadUrl: string; expiresInSeconds: number }>(
-      `/api/files/${fileId}/versions/${versionId}/download`
+      `/api/files/${fileId}/versions/${versionId}/download?disposition=${disposition}`
     ),
 
   restore: (fileId: string, versionId: string) =>
@@ -473,7 +477,66 @@ export const authApi = {
     newPassword: string;
     confirmPassword: string;
   }) => api.post<{ success: boolean; message: string }>("/api/auth/reset-password", data),
+
+  deleteAccount: (password?: string) =>
+    api.delete<{ success: boolean; message: string }>("/api/auth/account", {
+      body: JSON.stringify({ password }),
+    }),
 };
+
+export async function downloadFile(file: { id: string; name: string }) {
+  const res = await fileApi.getDownloadUrl(file.id, "attachment");
+  try {
+    const response = await fetch(res.downloadUrl);
+    if (!response.ok) throw new Error("Fetch failed");
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+  } catch {
+    const link = document.createElement("a");
+    link.href = res.downloadUrl;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+export async function downloadVersion(
+  fileId: string,
+  version: { id: string; versionNumber: number },
+  fileName: string
+) {
+  const res = await versionApi.getDownloadUrl(fileId, version.id, "attachment");
+  const downloadName = `v${version.versionNumber}-${fileName}`;
+  try {
+    const response = await fetch(res.downloadUrl);
+    if (!response.ok) throw new Error("Fetch failed");
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = downloadName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+  } catch {
+    const link = document.createElement("a");
+    link.href = res.downloadUrl;
+    link.download = downloadName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
 
 
 

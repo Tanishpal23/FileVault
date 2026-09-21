@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api, authApi } from "@/lib/api";
 
 export interface User {
   id: string;
@@ -26,6 +26,7 @@ interface AuthContextType {
     newPassword: string;
     confirmPassword: string;
   }) => Promise<{ success: boolean; message: string }>;
+  deleteAccount: (password?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -141,6 +142,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return api.post<{ success: boolean; message: string }>("/api/auth/reset-password", data);
   };
 
+  const deleteAccount = async (password?: string) => {
+    await authApi.deleteAccount(password);
+    setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("filevault_user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("filevault_token");
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -153,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser,
         forgotPassword,
         resetPassword,
+        deleteAccount,
       }}
     >
       {children}

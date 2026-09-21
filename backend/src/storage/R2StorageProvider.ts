@@ -104,7 +104,7 @@ export class R2StorageProvider implements StorageProvider {
     key: string,
     expiresInSeconds = 900,
     filename?: string,
-    disposition: "inline" | "attachment" = "inline"
+    disposition: "inline" | "attachment" = "attachment"
   ): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,

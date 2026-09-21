@@ -367,7 +367,8 @@ export class SharingService {
     const downloadUrl = await storage.getSignedDownloadUrl(
       link.file.storageKey,
       900,
-      link.file.name
+      link.file.name,
+      "attachment"
     );
 
     return {

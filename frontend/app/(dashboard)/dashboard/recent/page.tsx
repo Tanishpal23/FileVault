@@ -15,7 +15,7 @@ import {
   Calendar,
   Eye,
 } from "lucide-react";
-import { searchApi, fileApi } from "@/lib/api";
+import { searchApi, fileApi, downloadFile } from "@/lib/api";
 import { ShareModal } from "@/components/sharing/ShareModal";
 import { VersionHistoryModal } from "@/components/files/VersionHistoryModal";
 import FilePreviewModal from "@/components/files/FilePreviewModal";
@@ -101,8 +101,7 @@ export default function RecentPage() {
 
   const handleDownload = async (file: any) => {
     try {
-      const res = await fileApi.getDownloadUrl(file.id);
-      window.open(res.downloadUrl, "_blank");
+      await downloadFile(file);
     } catch (err: any) {
       alert(err.response?.data?.error?.message || "Failed to download file");
     }

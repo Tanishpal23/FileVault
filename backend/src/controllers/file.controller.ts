@@ -69,7 +69,7 @@ export class FileController {
 
   async download(req: Request, res: Response) {
     const id = req.params.id as string;
-    const disposition = (req.query.disposition as "inline" | "attachment") || "inline";
+    const disposition = (req.query.disposition as "inline" | "attachment") || "attachment";
     const result = await fileService.getDownloadUrl(req.user!.id, id, disposition);
     res.json({
       success: true,

@@ -64,7 +64,12 @@ export class VersionService {
   /**
    * Get a presigned download URL for a specific version snapshot
    */
-  async getDownloadUrl(userId: string, fileId: string, versionId: string) {
+  async getDownloadUrl(
+    userId: string,
+    fileId: string,
+    versionId: string,
+    disposition: "inline" | "attachment" = "attachment"
+  ) {
     const canDownload = await permissionsService.canDownload(userId, fileId);
     if (!canDownload) {
       throw ApiError.forbidden("You do not have permission to download this file");
@@ -77,7 +82,7 @@ export class VersionService {
 
     // Special case for initial-v1
     if (versionId === "initial-v1") {
-      const url = await storage.getSignedDownloadUrl(file.storageKey, 3600, file.name);
+      const url = await storage.getSignedDownloadUrl(file.storageKey, 3600, file.name, disposition);
       return {
         versionNumber: 1,
         downloadUrl: url,
@@ -91,7 +96,7 @@ export class VersionService {
     }
 
     const downloadName = `v${version.versionNumber}-${file.name}`;
-    const url = await storage.getSignedDownloadUrl(version.storageKey, 3600, downloadName);
+    const url = await storage.getSignedDownloadUrl(version.storageKey, 3600, downloadName, disposition);
 
     return {
       versionNumber: version.versionNumber,

@@ -16,7 +16,7 @@ import {
   Calendar,
   User,
 } from "lucide-react";
-import { shareApi, fileApi, FileItem } from "@/lib/api";
+import { shareApi, fileApi, downloadFile, FileItem } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import FilePreviewModal from "@/components/files/FilePreviewModal";
 
@@ -80,13 +80,7 @@ export default function SharedWithMePage() {
 
   const handleDownload = async (file: any) => {
     try {
-      const res = await fileApi.getDownloadUrl(file.id);
-      const link = document.createElement("a");
-      link.href = res.downloadUrl;
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await downloadFile(file);
     } catch {
       alert("Failed to download shared file");
     }

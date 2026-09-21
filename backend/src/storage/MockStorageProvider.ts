@@ -84,7 +84,7 @@ export class MockStorageProvider implements StorageProvider {
     key: string,
     _expiresInSeconds = 900,
     filename?: string,
-    disposition: "inline" | "attachment" = "inline"
+    disposition: "inline" | "attachment" = "attachment"
   ): Promise<string> {
     const encodedKey = encodeURIComponent(key);
     const fnParam = filename ? `&filename=${encodeURIComponent(filename)}` : "";

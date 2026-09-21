@@ -15,7 +15,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { versionApi, FileVersionItem } from "@/lib/api";
+import { versionApi, downloadVersion, FileVersionItem } from "@/lib/api";
 import { ConfirmModal, ConfirmVariant } from "@/components/ui/ConfirmModal";
 
 interface VersionHistoryModalProps {
@@ -95,10 +95,9 @@ export function VersionHistoryModal({
   const handleDownload = async (version: FileVersionItem) => {
     setActionLoadingId(`download-${version.id}`);
     try {
-      const res = await versionApi.getDownloadUrl(fileId, version.id);
-      window.open(res.downloadUrl, "_blank");
+      await downloadVersion(fileId, version, fileName);
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || "Failed to get download URL");
+      alert(err.response?.data?.error?.message || "Failed to download version");
     } finally {
       setActionLoadingId(null);
     }

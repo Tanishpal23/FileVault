@@ -133,7 +133,7 @@ export class FileService {
   async getDownloadUrl(
     userId: string,
     fileId: string,
-    disposition: "inline" | "attachment" = "inline"
+    disposition: "inline" | "attachment" = "attachment"
   ) {
     const canDownload = await permissionsService.canDownload(userId, fileId);
     if (!canDownload) {
