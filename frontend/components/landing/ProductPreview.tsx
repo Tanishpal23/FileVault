@@ -249,7 +249,7 @@ export default function ProductPreview() {
                 style={{ width: "72%" }}
               />
             </div>
-            <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">7.2 GB / 10 GB</p>
+            <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">720 MB / 1 GB</p>
           </div>
         </div>
 

@@ -2,6 +2,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator backendClient {
+  provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -36,7 +41,7 @@ model User {
   name          String
   passwordHash  String?
   avatarUrl     String?
-  storageQuota  BigInt    @default(10737418240) // 10 GB in bytes
+  storageQuota  BigInt    @default(1073741824) // 1 GB in bytes
   storageUsed   BigInt    @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -320,4 +325,17 @@ model StarredFile {
 
   @@id([userId, fileId])
   @@map("starred_files")
+}
+
+model EmailVerification {
+  id           String   @id @default(cuid())
+  email        String
+  name         String
+  passwordHash String
+  tokenHash    String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([email])
+  @@map("email_verifications")
 }

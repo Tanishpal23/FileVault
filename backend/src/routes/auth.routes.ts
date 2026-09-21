@@ -3,6 +3,8 @@ import { authController } from "../controllers/auth.controller";
 import { validateBody } from "../middleware/validateBody";
 import {
   registerSchema,
+  verifySignupOtpSchema,
+  resendSignupOtpSchema,
   loginSchema,
   refreshTokenSchema,
   forgotPasswordSchema,
@@ -14,6 +16,8 @@ import { requireAuth } from "../middleware/auth";
 const router = Router();
 
 router.post("/register", validateBody(registerSchema), authController.register);
+router.post("/verify-signup", validateBody(verifySignupOtpSchema), authController.verifySignup);
+router.post("/resend-signup-otp", validateBody(resendSignupOtpSchema), authController.resendSignupOtp);
 router.post("/login", validateBody(loginSchema), authController.login);
 router.post("/refresh", validateBody(refreshTokenSchema), authController.refresh);
 router.post("/logout", authController.logout);

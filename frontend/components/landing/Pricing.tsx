@@ -14,7 +14,7 @@ export default function Pricing() {
       cadence: "forever free",
       description: "Complete cloud file vault for personal productivity and individuals.",
       features: [
-        "5 GB Cloud Storage included",
+        "1 GB Cloud Storage included",
         "Resumable chunked file uploads",
         "Multi-format document & media previewer",
         "Real-time comments & collaborator mentions",

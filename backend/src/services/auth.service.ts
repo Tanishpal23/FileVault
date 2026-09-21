@@ -9,7 +9,8 @@ import { storage } from "../config/storage";
 
 export class AuthService {
   async register(data: { name: string; email: string; password: string }) {
-    const existing = await userRepository.findByEmail(data.email);
+    const cleanEmail = data.email.trim().toLowerCase();
+    const existing = await userRepository.findByEmail(cleanEmail);
     if (existing) {
       throw ApiError.conflict("An account with this email already exists.", "EMAIL_IN_USE");
     }
@@ -17,13 +18,94 @@ export class AuthService {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(data.password, salt);
 
-    const user = await userRepository.create({
-      name: data.name.trim(),
-      email: data.email.trim(),
-      passwordHash,
+    // Generate secure 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenHash = crypto.createHash("sha256").update(otp).digest("hex");
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    const db = prisma as any;
+
+    // Clean up any previous pending verification for this email
+    await db.emailVerification.deleteMany({
+      where: { email: cleanEmail },
     });
 
-    const tokens = await this.generateTokens(user.id, user.email, user.name);
+    await db.emailVerification.create({
+      data: {
+        email: cleanEmail,
+        name: data.name.trim(),
+        passwordHash,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    // Dispatch verification email
+    const { emailService } = await import("../email/email.service");
+    const delivered = await emailService.sendSignupOtp({
+      recipientEmail: cleanEmail,
+      recipientName: data.name.trim(),
+      otp,
+    });
+
+    if (!delivered) {
+      throw ApiError.internal("Failed to send verification email. Please try again later.");
+    }
+
+    return {
+      success: true,
+      message: "A 6-digit verification code has been sent to your email.",
+      email: cleanEmail,
+    };
+  }
+
+  async verifySignupOtp(data: {
+    email: string;
+    otp: string;
+    userAgent?: string;
+    ipAddress?: string;
+  }) {
+    const cleanEmail = data.email.trim().toLowerCase();
+    const tokenHash = crypto.createHash("sha256").update(data.otp.trim()).digest("hex");
+
+    const db = prisma as any;
+
+    const verification = await db.emailVerification.findFirst({
+      where: {
+        email: cleanEmail,
+        tokenHash,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!verification) {
+      throw ApiError.badRequest("Invalid or expired verification code.", "INVALID_OTP");
+    }
+
+    const existing = await userRepository.findByEmail(cleanEmail);
+    if (existing) {
+      throw ApiError.conflict("An account with this email already exists.", "EMAIL_IN_USE");
+    }
+
+    const user = await userRepository.create({
+      name: verification.name,
+      email: verification.email,
+      passwordHash: verification.passwordHash,
+    });
+
+    // Clean up used verifications
+    await db.emailVerification.deleteMany({
+      where: { email: cleanEmail },
+    });
+
+    const tokens = await this.generateTokens(
+      user.id,
+      user.email,
+      user.name,
+      data.userAgent,
+      data.ipAddress
+    );
 
     return {
       user: {
@@ -34,6 +116,48 @@ export class AuthService {
         storageUsed: user.storageUsed.toString(),
       },
       ...tokens,
+    };
+  }
+
+  async resendSignupOtp(email: string) {
+    const cleanEmail = email.trim().toLowerCase();
+    const db = prisma as any;
+
+    const pending = await db.emailVerification.findFirst({
+      where: { email: cleanEmail },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!pending) {
+      throw ApiError.notFound("No pending registration found. Please submit your details again.");
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenHash = crypto.createHash("sha256").update(otp).digest("hex");
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await db.emailVerification.update({
+      where: { id: pending.id },
+      data: {
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    const { emailService } = await import("../email/email.service");
+    const delivered = await emailService.sendSignupOtp({
+      recipientEmail: cleanEmail,
+      recipientName: pending.name,
+      otp,
+    });
+
+    if (!delivered) {
+      throw ApiError.internal("Failed to send verification email. Please try again later.");
+    }
+
+    return {
+      success: true,
+      message: "A new 6-digit verification code has been sent to your email.",
     };
   }
 

@@ -125,6 +125,9 @@ export class BrevoEmailProvider implements IEmailProvider {
       const data: any = await response.json();
       if (!response.ok) {
         console.error("❌ Brevo API error:", data);
+        if (this.apiKey.startsWith("xsmtpsib")) {
+          console.error("⚠️ Warning: You provided an SMTP key (starts with 'xsmtpsib-'). Brevo HTTP API requires an API key from the 'API Keys' tab (starts with 'xkeysib-').");
+        }
         return false;
       }
       console.log(`📧 Email sent successfully to ${options.to} via Brevo (MessageId: ${data.messageId})`);
@@ -201,6 +204,47 @@ export class EmailService {
         </div>
         <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 24px 0 0; text-align: center;">
           If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
+        </p>
+      </div>
+    `;
+
+    return this.provider.sendEmail({
+      to: params.recipientEmail,
+      subject,
+      html,
+      text: `Your FileVault verification code is: ${params.otp}. It expires in 10 minutes.`,
+    });
+  }
+
+  async sendSignupOtp(params: {
+    recipientEmail: string;
+    recipientName?: string;
+    otp: string;
+  }) {
+    const subject = `Your FileVault Verification Code: ${params.otp}`;
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-block; background: #4f46e5; color: #ffffff; font-weight: bold; font-size: 20px; padding: 10px 18px; border-radius: 10px;">
+            FileVault
+          </div>
+        </div>
+        <h2 style="color: #0f172a; margin: 0 0 12px; font-size: 20px; font-weight: 700; text-align: center;">
+          Verify Your Email Address
+        </h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px; text-align: center;">
+          Hi ${params.recipientName || "there"}, welcome to FileVault! Enter the 6-digit verification code below to activate your account:
+        </p>
+        <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0;">
+          <span style="font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #4f46e5;">
+            ${params.otp}
+          </span>
+          <p style="color: #64748b; font-size: 12px; margin: 8px 0 0;">
+            Valid for 10 minutes • Do not share this code with anyone
+          </p>
+        </div>
+        <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 24px 0 0; text-align: center;">
+          If you did not sign up for FileVault, you can safely ignore this email.
         </p>
       </div>
     `;

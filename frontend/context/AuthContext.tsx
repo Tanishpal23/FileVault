@@ -16,7 +16,15 @@ interface AuthContextType {
   loading: boolean;
   login: (credentials: { email: string; password: string; rememberMe?: boolean }) => Promise<void>;
   loginAsDemo: () => void;
-  register: (data: { name: string; email: string; password: string; confirmPassword: string }) => Promise<void>;
+  register: (data: { name: string; email: string; password: string; confirmPassword: string }) => Promise<any>;
+  initiateRegister: (data: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }) => Promise<{ success: boolean; message: string; email: string }>;
+  verifySignup: (data: { email: string; otp: string }) => Promise<void>;
+  resendSignupOtp: (email: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
@@ -89,8 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: "demo-user-1",
       name: "Rahul Sharma",
       email: "rahul@filevault.io",
-      storageQuota: "10737418240",
-      storageUsed: "7730941132",
+      storageQuota: "1073741824",
+      storageUsed: "773094113",
     };
     setUser(demoUser);
     if (typeof window !== "undefined") {
@@ -98,8 +106,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (data: { name: string; email: string; password: string; confirmPassword: string }) => {
-    const res = await api.post<{ user: User; accessToken?: string; refreshToken?: string }>("/api/auth/register", data);
+  const initiateRegister = async (data: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }) => {
+    return api.post<{ success: boolean; message: string; email: string }>("/api/auth/register", data);
+  };
+
+  const verifySignup = async (data: { email: string; otp: string }) => {
+    const res = await api.post<{ user: User; accessToken?: string; refreshToken?: string }>("/api/auth/verify-signup", data);
     setUser(res.user);
     if (typeof window !== "undefined") {
       localStorage.setItem("filevault_user", JSON.stringify(res.user));
@@ -110,6 +127,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("refreshToken", res.refreshToken);
       }
     }
+  };
+
+  const resendSignupOtp = async (email: string) => {
+    return api.post<{ success: boolean; message: string }>("/api/auth/resend-signup-otp", { email });
+  };
+
+  const register = async (data: { name: string; email: string; password: string; confirmPassword: string }) => {
+    return initiateRegister(data);
   };
 
   const logout = async () => {
@@ -161,6 +186,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         loginAsDemo,
         register,
+        initiateRegister,
+        verifySignup,
+        resendSignupOtp,
         logout,
         refreshUser,
         forgotPassword,

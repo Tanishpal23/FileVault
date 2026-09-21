@@ -71,7 +71,7 @@ export default function Hero() {
               </div>
               <div className="flex items-center gap-1.5">
                 <HardDrive className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                <span>10 GB free storage</span>
+                <span>1 GB free storage</span>
               </div>
             </div>
           </div>

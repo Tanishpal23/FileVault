@@ -39,7 +39,7 @@ export default function SettingsPage() {
   };
 
   const usedBytes = Number(user?.storageUsed || "0");
-  const totalBytes = Number(user?.storageQuota || "10737418240");
+  const totalBytes = Number(user?.storageQuota || "1073741824");
   const percentUsed = Math.min(100, Math.round((usedBytes / totalBytes) * 100));
 
   const handleDelete = async (e: React.FormEvent) => {

@@ -67,8 +67,8 @@ export default function DashboardLayout({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
-  const usedBytes = Number(user?.storageUsed || "7730941132");
-  const totalBytes = Number(user?.storageQuota || "10737418240");
+  const usedBytes = Number(user?.storageUsed || "0");
+  const totalBytes = Number(user?.storageQuota || "1073741824");
   const percentUsed = Math.min(100, Math.round((usedBytes / totalBytes) * 100));
 
   if (loading) {

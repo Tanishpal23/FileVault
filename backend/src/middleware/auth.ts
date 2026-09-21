@@ -30,7 +30,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
       id: decoded.userId,
       email: decoded.email,
       name: decoded.name,
-      storageQuota: "10737418240",
+      storageQuota: "1073741824",
       storageUsed: "0",
     };
     next();

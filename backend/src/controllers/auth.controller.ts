@@ -15,12 +15,40 @@ export class AuthController {
   register = asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.register(req.body);
 
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result,
+    });
+  });
+
+  verifySignup = asyncHandler(async (req: Request, res: Response) => {
+    const userAgent = req.headers["user-agent"];
+    const ipAddress = req.ip;
+
+    const result = await authService.verifySignupOtp({
+      email: req.body.email,
+      otp: req.body.otp,
+      userAgent,
+      ipAddress,
+    });
+
     res.cookie("accessToken", result.accessToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
     res.cookie("refreshToken", result.refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(201).json({
       success: true,
+      message: "Account created and verified successfully",
       data: result,
+    });
+  });
+
+  resendSignupOtp = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.resendSignupOtp(req.body.email);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
     });
   });
 
