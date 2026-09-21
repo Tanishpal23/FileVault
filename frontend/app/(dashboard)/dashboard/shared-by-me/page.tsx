@@ -133,6 +133,7 @@ export default function SharedByMePage() {
                   <th className="py-3 px-3">Public Links</th>
                   <th className="py-3 px-3">Size</th>
                   <th className="py-3 px-3">Last Modified</th>
+                  <th className="py-3 px-3 text-center">Preview</th>
                   <th className="py-3 pr-4 pl-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -170,6 +171,17 @@ export default function SharedByMePage() {
                     <td className="py-3 px-3 text-slate-500 dark:text-slate-400">
                       {new Date(file.updatedAt).toLocaleDateString()}
                     </td>
+                    <td className="py-3 px-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewFile(file)}
+                        className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                        title="Preview file"
+                        aria-label={`Preview ${file.name}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </td>
                     <td className="py-3 pr-4 pl-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
@@ -180,14 +192,6 @@ export default function SharedByMePage() {
                         >
                           <Share2 className="h-3 w-3" />
                           <span>Manage</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewFile(file)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer"
-                          title="Preview"
-                        >
-                          <Eye className="h-4 w-4" />
                         </button>
                         <button
                           type="button"

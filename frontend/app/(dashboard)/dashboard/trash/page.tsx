@@ -12,8 +12,10 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Eye,
 } from "lucide-react";
 import { trashApi, TrashItemFile, TrashItemFolder } from "@/lib/api";
+import FilePreviewModal from "@/components/files/FilePreviewModal";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmModal, ConfirmVariant } from "@/components/ui/ConfirmModal";
 
@@ -22,6 +24,7 @@ export default function TrashPage() {
   const [files, setFiles] = useState<TrashItemFile[]>([]);
   const [folders, setFolders] = useState<TrashItemFolder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewFile, setPreviewFile] = useState<any | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [emptyTrashLoading, setEmptyTrashLoading] = useState(false);
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -375,6 +378,7 @@ export default function TrashPage() {
                       <th className="hidden sm:table-cell px-4 py-3">Original Folder</th>
                       <th className="px-4 py-3">Size</th>
                       <th className="hidden md:table-cell px-4 py-3">Deleted Date</th>
+                      <th className="px-4 py-3 text-center">Preview</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -400,6 +404,17 @@ export default function TrashPage() {
                         </td>
                         <td className="hidden md:table-cell px-4 py-3 text-slate-500 dark:text-slate-400">
                           {formatDate(file.deletedAt)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewFile(file)}
+                            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                            title="Preview file"
+                            aria-label={`Preview ${file.name}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="inline-flex items-center gap-1.5">
@@ -440,6 +455,14 @@ export default function TrashPage() {
             </div>
           )}
         </div>
+      )}
+
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          isOpen={!!previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
       )}
 
       <ConfirmModal

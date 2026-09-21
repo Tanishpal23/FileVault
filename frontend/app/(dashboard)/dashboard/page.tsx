@@ -487,6 +487,7 @@ export default function DashboardPage() {
                     <th className="py-3 px-6">Name</th>
                     <th className="py-3 px-4 hidden sm:table-cell">Size</th>
                     <th className="py-3 px-4 hidden md:table-cell">Modified</th>
+                    <th className="py-3 px-4 text-center">Preview</th>
                     <th className="py-3 px-6 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -512,6 +513,21 @@ export default function DashboardPage() {
 
                       <td className="py-3 px-4 text-slate-500 dark:text-slate-400 hidden md:table-cell">
                         {new Date(file.updatedAt).toLocaleDateString()}
+                      </td>
+
+                      <td
+                        className="py-3 px-4 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setPreviewFile(file)}
+                          className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                          title="Preview file"
+                          aria-label={`Preview ${file.name}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </td>
 
                       <td

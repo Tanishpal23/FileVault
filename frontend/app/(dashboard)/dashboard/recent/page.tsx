@@ -13,10 +13,12 @@ import {
   LayoutGrid,
   List,
   Calendar,
+  Eye,
 } from "lucide-react";
 import { searchApi, fileApi } from "@/lib/api";
 import { ShareModal } from "@/components/sharing/ShareModal";
 import { VersionHistoryModal } from "@/components/files/VersionHistoryModal";
+import FilePreviewModal from "@/components/files/FilePreviewModal";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmModal, ConfirmVariant } from "@/components/ui/ConfirmModal";
 
@@ -25,6 +27,7 @@ export default function RecentPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [previewFile, setPreviewFile] = useState<any | null>(null);
   const [shareModalFile, setShareModalFile] = useState<{ id: string; name: string } | null>(null);
   const [versionModalFile, setVersionModalFile] = useState<{ id: string; name: string } | null>(null);
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -245,6 +248,7 @@ export default function RecentPage() {
                           <th className="hidden sm:table-cell px-4 py-3">Folder</th>
                           <th className="px-4 py-3">Size</th>
                           <th className="hidden md:table-cell px-4 py-3">Timestamp</th>
+                          <th className="px-4 py-3 text-center">Preview</th>
                           <th className="px-4 py-3 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -284,6 +288,17 @@ export default function RecentPage() {
                             </td>
                             <td className="hidden md:table-cell px-4 py-3 text-slate-500 dark:text-slate-400">
                               {formatDate(file.updatedAt)}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewFile(file)}
+                                className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                                title="Preview file"
+                                aria-label={`Preview ${file.name}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <div className="inline-flex items-center gap-1">
@@ -414,6 +429,14 @@ export default function RecentPage() {
       )}
 
       {/* Modals */}
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          isOpen={!!previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
+
       {shareModalFile && (
         <ShareModal
           isOpen={true}
