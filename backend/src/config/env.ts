@@ -28,6 +28,8 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional().default(""),
   SMTP_PASS: z.string().optional().default(""),
   SMTP_FROM: z.string().optional().default("FileVault <no-reply@filevault.com>"),
+  RESEND_API_KEY: z.string().optional().default(""),
+  RESEND_FROM: z.string().optional().default("FileVault <onboarding@resend.dev>"),
 });
 
 const parsed = envSchema.safeParse(process.env);

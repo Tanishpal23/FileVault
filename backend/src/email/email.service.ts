@@ -51,6 +51,43 @@ export class NodemailerEmailProvider implements IEmailProvider {
   }
 }
 
+export class ResendEmailProvider implements IEmailProvider {
+  constructor(private apiKey: string, private from: string) {
+    console.log("📧 Resend HTTPS Email Provider initialized (Port 443)");
+  }
+
+  async sendEmail(options: EmailOptions): Promise<boolean> {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: this.from,
+          to: [options.to],
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+          reply_to: env.SMTP_USER || undefined,
+        }),
+      });
+
+      const data: any = await response.json();
+      if (!response.ok) {
+        console.error("❌ Resend API error:", data);
+        return false;
+      }
+      console.log(`📧 Email sent successfully to ${options.to} via Resend (ID: ${data.id})`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to send email via Resend to ${options.to}:`, error);
+      return false;
+    }
+  }
+}
+
 export class ConsoleEmailProvider implements IEmailProvider {
   async sendEmail(options: EmailOptions): Promise<boolean> {
     console.log("\n================== 📧 OUTGOING EMAIL (DEV CONSOLE) ==================");
@@ -67,10 +104,12 @@ export class EmailService {
   private provider: IEmailProvider;
 
   constructor() {
-    if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    if (env.RESEND_API_KEY) {
+      this.provider = new ResendEmailProvider(env.RESEND_API_KEY, env.RESEND_FROM);
+    } else if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
       this.provider = new NodemailerEmailProvider();
     } else {
-      console.log("📧 Using Console Email Provider (Set SMTP_HOST, SMTP_USER, SMTP_PASS in .env for real delivery)");
+      console.log("📧 Using Console Email Provider (Set RESEND_API_KEY or SMTP_HOST in .env for real delivery)");
       this.provider = new ConsoleEmailProvider();
     }
   }
