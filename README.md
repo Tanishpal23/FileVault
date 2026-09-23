@@ -201,7 +201,7 @@ graph TB
 
     subgraph DataTier["Relational Persistence Tier"]
         Prisma["Prisma ORM Client"]
-        Postgres[(PostgreSQL / Neon Serverless)]
+        Postgres[("PostgreSQL / Neon Serverless")]
     end
 
     subgraph ExternalTier["External Communications Tier"]
@@ -224,12 +224,12 @@ graph TB
     CronJob --> Prisma
     Prisma --> Postgres
 
-    FileSvc -.->|Generate Presigned URLs| StorageTier
-    UI ==>|Direct Chunk Stream (Presigned PUT)| StorageTier
-    StorageTier ==>|Direct Inline Media Stream| UI
-    FileSvc -->|Batch Object Purge| StorageTier
+    FileSvc -.->|"Generate Presigned URLs"| StorageTier
+    UI ==>|"Direct Chunk Stream - Presigned PUT"| StorageTier
+    StorageTier ==>|"Direct Inline Media Stream"| UI
+    FileSvc -->|"Batch Object Purge"| StorageTier
 
-    AuthSvc -->|Transactional OTP (Port 443)| ExternalTier
+    AuthSvc -->|"Transactional OTP via HTTPS"| ExternalTier
 ```
 
 ### Architectural Layers
@@ -261,7 +261,7 @@ sequenceDiagram
 
     User->>API: 1. Request multipart upload initiation (File metadata)
     API->>DB: Check 1 GB user quota availability
-    DB-->>API: Quota confirmed (< 1 GB used)
+    DB-->>API: Quota confirmed (Under 1 GB used)
     API->>S3: CreateMultipartUploadCommand
     S3-->>API: Returns UploadId & part presigned URLs
     API-->>User: Returns UploadId & signed URLs (5 MB chunks)
@@ -337,7 +337,7 @@ sequenceDiagram
     Frontend->>S3: Stream PDF / Media directly into previewer
     Frontend->>Socket: Emit 'join-file-room' (file:id)
     Socket-->>Frontend: Joined room successfully
-    UserA->>Frontend: Post comment ("Please review slide 4")
+    UserA->>Frontend: Post comment: Please review slide 4
     Frontend->>API: POST /api/comments
     API->>DB: Persist comment
     API->>Socket: Broadcast 'new-comment' to room file:id
