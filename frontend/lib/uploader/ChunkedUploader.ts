@@ -1,3 +1,5 @@
+import { inferMimeType } from "../fileUtils";
+
 export interface UploadProgress {
   bytesUploaded: number;
   totalBytes: number;
@@ -247,7 +249,7 @@ export class ChunkedUploader {
       headers: this.getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         filename: this.file.name,
-        mimeType: this.file.type || "application/octet-stream",
+        mimeType: inferMimeType(this.file.name, this.file.type),
         fileSize: this.file.size,
         folderId: this.folderId || null,
       }),

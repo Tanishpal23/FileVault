@@ -163,6 +163,47 @@ export class FileService {
       expiresInSeconds: 3600,
     };
   }
+
+  async getFileContent(userId: string, fileId: string) {
+    const canDownload = await permissionsService.canDownload(userId, fileId);
+    if (!canDownload) {
+      throw ApiError.notFound("File not found");
+    }
+
+    const file = await fileRepository.findByIdForUser(fileId, userId);
+    if (!file) {
+      throw ApiError.notFound("File not found");
+    }
+
+    // Safety guard: Limit preview to 5 MB
+    const MAX_PREVIEW_SIZE = 5 * 1024 * 1024;
+    if (file.size > BigInt(MAX_PREVIEW_SIZE)) {
+      throw ApiError.badRequest("File exceeds 5 MB preview limit. Please download to view.");
+    }
+
+    const rawStream = await storage.getObject(file.storageKey);
+    let content = "";
+    if (rawStream && typeof rawStream.transformToString === "function") {
+      content = await rawStream.transformToString("utf-8");
+    } else if (rawStream && typeof (rawStream as any)[Symbol.asyncIterator] === "function") {
+      const chunks: Buffer[] = [];
+      for await (const chunk of rawStream) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      content = Buffer.concat(chunks).toString("utf-8");
+    } else if (Buffer.isBuffer(rawStream)) {
+      content = rawStream.toString("utf-8");
+    } else if (typeof rawStream === "string") {
+      content = rawStream;
+    }
+
+    return {
+      content,
+      mimeType: file.mimeType,
+      name: file.name,
+      size: file.size.toString(),
+    };
+  }
 }
 
 export const fileService = new FileService();

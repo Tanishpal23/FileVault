@@ -76,6 +76,15 @@ export class FileController {
       ...result,
     });
   }
+
+  async getContent(req: Request, res: Response) {
+    const id = req.params.id as string;
+    const result = await fileService.getFileContent(req.user!.id, id);
+    res.json({
+      success: true,
+      data: result,
+    });
+  }
 }
 
 export const fileController = new FileController();

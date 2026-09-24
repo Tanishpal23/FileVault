@@ -165,6 +165,13 @@ export const fileApi = {
       file: { id: string; name: string; mimeType: string; size: string };
       downloadUrl: string;
     }>(`/api/files/${id}/download?disposition=${disposition}`),
+  getContent: (id: string) =>
+    api.get<{
+      content: string;
+      mimeType: string;
+      name: string;
+      size: string;
+    }>(`/api/files/${id}/content`),
 };
 
 export interface Collaborator {

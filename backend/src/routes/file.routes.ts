@@ -13,5 +13,6 @@ router.patch("/:id/move", (req, res, next) => fileController.move(req, res).catc
 router.delete("/:id", (req, res, next) => fileController.delete(req, res).catch(next));
 router.post("/:id/star", (req, res, next) => fileController.toggleStar(req, res).catch(next));
 router.get("/:id/download", (req, res, next) => fileController.download(req, res).catch(next));
+router.get("/:id/content", (req, res, next) => fileController.getContent(req, res).catch(next));
 
 export default router;

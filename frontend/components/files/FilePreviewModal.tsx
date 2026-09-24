@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FileItem, fileApi, downloadFile } from "@/lib/api";
 import { CommentThread } from "@/components/comments/CommentThread";
+import { isTextOrCodeFile } from "@/lib/fileUtils";
 
 interface FilePreviewModalProps {
   file: FileItem | null;
@@ -68,38 +69,57 @@ export default function FilePreviewModal({
     setZoom(1);
     setRotation(0);
 
-    fileApi
-      .getDownloadUrl(file.id, "inline")
-      .then(async (res) => {
-        if (!isMounted) return;
-        setDownloadUrl(res.downloadUrl);
+    const isTextFile = isTextOrCodeFile(file.name, file.mimeType);
 
-        // If it's a text-based or code file, fetch its raw content for preview
-        if (
-          file.mimeType.startsWith("text/") ||
-          file.mimeType.includes("json") ||
-          file.mimeType.includes("javascript") ||
-          file.mimeType.includes("typescript") ||
-          file.mimeType.includes("xml") ||
-          file.mimeType.includes("html") ||
-          file.mimeType.includes("yaml") ||
-          file.mimeType.includes("markdown")
-        ) {
-          try {
-            const textRes = await fetch(res.downloadUrl);
-            const text = await textRes.text();
-            if (isMounted) setTextContent(text);
-          } catch {
-            // Non-critical, fallback to standard card
-          }
-        }
+    // 1. Fetch download URL for the Download button and media playback
+    const downloadPromise = fileApi
+      .getDownloadUrl(file.id, "inline")
+      .then((res) => {
+        if (!isMounted) return null;
+        setDownloadUrl(res.downloadUrl);
+        return res.downloadUrl;
       })
       .catch((err: any) => {
-        if (isMounted) setError(err.message || "Failed to load preview URL");
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
+        if (isMounted && !isTextFile) {
+          setError(err.message || "Failed to load preview URL");
+        }
+        return null;
       });
+
+    // 2. If it's a text/code file, fetch its raw content directly via backend API
+    const contentPromise = isTextFile
+      ? fileApi
+          .getContent(file.id)
+          .then((res: any) => {
+            const text = res?.content ?? res?.data?.content ?? (typeof res === "string" ? res : null);
+            if (isMounted && text !== null && text !== undefined) {
+              setTextContent(String(text));
+            }
+          })
+          .catch(async (contentErr: any) => {
+            // Fallback: try direct fetch from downloadUrl if available
+            try {
+              const directUrl = await downloadPromise;
+              if (directUrl) {
+                const textRes = await fetch(directUrl);
+                if (textRes.ok) {
+                  const text = await textRes.text();
+                  if (isMounted) setTextContent(text);
+                  return;
+                }
+              }
+            } catch {
+              // Fallback fetch failed
+            }
+            if (isMounted) {
+              setError(contentErr.message || "Failed to load file preview");
+            }
+          })
+      : Promise.resolve();
+
+    Promise.all([downloadPromise, contentPromise]).finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
 
     return () => {
       isMounted = false;
@@ -108,9 +128,9 @@ export default function FilePreviewModal({
 
   if (!isOpen || !file) return null;
 
-  const isImage = file.mimeType.startsWith("image/");
-  const isVideo = file.mimeType.startsWith("video/");
-  const isAudio = file.mimeType.startsWith("audio/");
+  const isImage = file.mimeType.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|ico)$/i.test(file.name);
+  const isVideo = file.mimeType.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
+  const isAudio = file.mimeType.startsWith("audio/") || /\.(mp3|wav|ogg|aac|m4a|flac)$/i.test(file.name);
   const isPdf = file.mimeType === "application/pdf" || file.mimeType.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
   const isText = Boolean(textContent !== null);
 
@@ -332,17 +352,23 @@ export default function FilePreviewModal({
                   />
                 )}
 
-                {/* Text / Code Preview with Line Numbers */}
+                {/* Text / Code Preview with Synchronized Line Numbers */}
                 {isText && (
-                  <div className="w-full h-full rounded-xl bg-slate-950 border border-slate-800 overflow-auto flex font-mono text-xs text-slate-200">
-                    <div className="select-none py-4 px-3 bg-slate-900/60 border-r border-slate-800 text-slate-500 text-right">
-                      {textContent?.split("\n").map((_, i) => (
-                        <div key={i}>{i + 1}</div>
-                      ))}
-                    </div>
-                    <div className="p-4 flex-1 whitespace-pre overflow-x-auto leading-relaxed">
-                      {textContent}
-                    </div>
+                  <div className="w-full h-full rounded-xl bg-slate-950 border border-slate-800 overflow-auto font-mono text-xs text-slate-200">
+                    <table className="w-full border-collapse">
+                      <tbody>
+                        {textContent?.split("\n").map((line, i) => (
+                          <tr key={i} className="hover:bg-slate-900/60 transition-colors group">
+                            <td className="select-none py-1 px-3 bg-slate-900/40 border-r border-slate-800/80 text-slate-500 text-right font-mono align-top w-12 min-w-[3.5rem] text-[11px] leading-5 group-hover:text-slate-400">
+                              {i + 1}
+                            </td>
+                            <td className="py-1 px-4 whitespace-pre font-mono text-slate-200 align-top leading-5 text-xs">
+                              {line || "\u00A0"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
 
